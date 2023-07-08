@@ -1,0 +1,17 @@
+Date: July 07, 2023
+
+Progress:
+
+Implemented CMake build system to enhance code management, making it clearer and simpler.
+Redesigned the entire system, reducing coupling and improving security.
+Separated the implementation of CornInfo and CornState into separate .cpp and .hpp files.
+Improved the hash function, resulting in a threefold speed improvement.
+Optimized the algorithm for finding next states, enhancing readability and reducing code length.
+
+Next Steps:
+
+Separate the implementation of CornSolver into .cpp and .hpp files.
+Update the documentation to include installation instructions.
+Add an option to CornState for reading from files.
+Implement the "interleaved meet in the middle" technique to avoid excessive search.
+Continue refining and completing the algorithm.
