@@ -1,0 +1,14 @@
+Date: July 23, 2023
+
+Progress:
+
+Update CornState to support backtrace functionality
+Seperate interface and implementation for CornSolver
+Refine algorithm to genuine meet-in-the-middle
+Wrap up main.cpp
+Update C++ standard to C++20 to support some features
+
+Next Steps:
+Implement backtrace functionality
+Add CornOperation to support step compression and solution display
+Design the algorithm to make all lower level color distinct

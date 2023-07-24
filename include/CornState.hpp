@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "CornInfo.hpp"
+// #include "CornOperation.hpp"
 
 class CornState {
 public:
@@ -23,15 +24,16 @@ public:
     size_t getUpper() const { return m_upper; }
     size_t getMedium() const { return m_medium; }
     size_t getLower() const { return m_lower; }
-    size_t getEmptySlotID() const;
 
     bool operator==(const CornState& other) const;
 
     void print(std::ostream &os = std::cout) const;
     void pprint(std::ostream &os = std::cout) const;
 
-    CornState rotateAndMove(CornInfo &info, int emptySlotLayer, size_t emptySlotIndex) const;
+    CornState rotateAndMove(CornInfo &info) const;
     void getNewStates(std::vector<std::pair<CornState, CornInfo>>& newStates) const;
+
+    CornState getPreviousState(const CornInfo &info) const;
 
 private:
     // Each layer is an 18-bit integer, where each color is represented by 3 bits.
@@ -56,5 +58,9 @@ private:
     bool checkValidColors();
     static void checkValidColors(size_t extra, const std::vector<size_t> &upper, const std::vector<size_t> &medium, const std::vector<size_t> &lower);
 
+    std::pair<int, int> getEmptySlotLoc() const;
+
     void printLine(size_t mask, std::ostream &os = std::cout) const;
 };
+
+std::ostream &operator<<(std::ostream &os, const CornState &state);

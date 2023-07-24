@@ -13,33 +13,24 @@ CornState::CornState(size_t extra, const std::vector<size_t> &upper, const std::
     getMinRotation(colorsToBit(lower), m_lower);
 }
 
-size_t CornState::getEmptySlotID() const {
+std::pair<int, int> CornState::getEmptySlotLoc() const {
     if (m_extra == 0) {
-        return 0;
+        return {0, 0};
     }
     if (getkthColor(m_medium, 0) == 0) {
-        return 12;
+        return {2, 0};
     }
     if (getkthColor(m_lower, 0) == 0) {
-        return 18;
+        throw std::runtime_error("Currently empty slot is not supposed to be in the lower layer");
+        return {3, 0};
     }
     for (size_t col = 0; col < 6; ++col) {
         if (getkthColor(m_upper, col) == 0) {
-            return col + 6;
+            return {1, col};
         }
     }
-    // for (size_t col = 0; col < 6; ++col) {
-    //     if (getkthColor(m_upper, col) == 0) {
-    //         return col + 6;
-    //     }
-    //     if (getkthColor(m_medium, col) == 0) {
-    //         return col + 12;
-    //     }
-    //     if (getkthColor(m_lower, col) == 0) {
-    //         return col + 18;
-    //     }
-    // }
-    return 0;
+    throw std::runtime_error("No empty slot found");
+    return {0, 0};
 }
 
 bool CornState::operator==(const CornState& other) const {
@@ -58,23 +49,23 @@ void CornState::pprint(std::ostream &os) const {
 }
 
 // Modify the info in place
-// The info should contain m_mediumRotation, m_lowerRotation, m_move
+// The info should contain m_mediumRotation, m_lowerRotation, m_emptySlotID, m_move
 // The method should return the new state
 // And update the info with m_mediumAdjustment, m_lowerAdjustment
-CornState CornState::rotateAndMove(CornInfo &info, int emptySlotLayer, size_t emptySlotIndex) const {
+CornState CornState::rotateAndMove(CornInfo &info) const {
     std::array<size_t, 4> newLayers{m_extra << 15, m_upper, rotate3kBits(m_medium, info.m_mediumRotation), rotate3kBits(m_lower, info.m_lowerRotation)};
 
     // Move the empty slot
     if (info.m_move > 0) {
-        for (int layer = emptySlotLayer; layer < emptySlotLayer + info.m_move; ++layer) {
-            setkthColor(newLayers[layer], emptySlotIndex, getkthColor(newLayers[layer + 1], emptySlotIndex));
+        for (int layer = info.m_emptySlotLayer; layer < info.m_emptySlotLayer + info.m_move; ++layer) {
+            setkthColor(newLayers[layer], info.m_emptySlotIndex, getkthColor(newLayers[layer + 1], info.m_emptySlotIndex));
         }
-        setkthColor(newLayers[emptySlotLayer + info.m_move], emptySlotIndex, 0);
+        setkthColor(newLayers[info.m_emptySlotLayer + info.m_move], info.m_emptySlotIndex, 0);
     } else if (info.m_move < 0) {
-        for (int layer = emptySlotLayer; layer > emptySlotLayer + info.m_move; --layer) {
-            setkthColor(newLayers[layer], emptySlotIndex, getkthColor(newLayers[layer - 1], emptySlotIndex));
+        for (int layer = info.m_emptySlotLayer; layer > info.m_emptySlotLayer + info.m_move; --layer) {
+            setkthColor(newLayers[layer], info.m_emptySlotIndex, getkthColor(newLayers[layer - 1], info.m_emptySlotIndex));
         }
-        setkthColor(newLayers[emptySlotLayer + info.m_move], emptySlotIndex, 0);
+        setkthColor(newLayers[info.m_emptySlotLayer + info.m_move], info.m_emptySlotIndex, 0);
     }
 
     // Adjust the medium and lower layers
@@ -86,59 +77,47 @@ CornState CornState::rotateAndMove(CornInfo &info, int emptySlotLayer, size_t em
 
 void CornState::getNewStates(std::vector<std::pair<CornState, CornInfo>> &newStates) const {
     // Locate the empty slot
-    size_t emptySlotID = getEmptySlotID();
-    int emptySlotLayer = emptySlotID / 6;
-    size_t emptySlotIndex = emptySlotID % 6;
+    std::pair<int, int> emptySlotID = getEmptySlotLoc();
+    int emptySlotLayer = emptySlotID.first;
 
-    // Rotate the medium and lower layers
+    // For the current algorithm, we only consider the medium layer rotation
     for (size_t mediumRotation = 0; mediumRotation < 6; mediumRotation++) {
-        // for (size_t lowerRotation = 0; lowerRotation < 6; lowerRotation++) {
-        //     for (int targetLayer = emptySlotIndex == 0 ? 0 : 1; targetLayer < 4; targetLayer++) {
-        //         if (targetLayer == emptySlotLayer) {
-        //             continue;
-        //         }
-        //         CornInfo info{mediumRotation, lowerRotation, targetLayer - emptySlotLayer};
-        //         CornState newState = rotateAndMove(info, emptySlotID);
-        //         newStates.push_back(std::make_pair(std::move(newState), std::move(info)));
-        //     }
-        // }
-
         size_t lowerRotation = 0;
-        emptySlotIndex = emptySlotID % 6;
-        if (emptySlotLayer == 2) {
-            emptySlotIndex = (emptySlotIndex + mediumRotation) % 6;
-        }
-        else if (emptySlotLayer == 3) {
-            emptySlotIndex = (emptySlotIndex + lowerRotation) % 6;
-        }
+        int emptySlotIndex = emptySlotLayer == 2 ? (emptySlotID.second + mediumRotation) % 6 : emptySlotID.second;
 
         for (int targetLayer = emptySlotIndex == 0 ? 0 : 1; targetLayer < 3; targetLayer++) {
             if (targetLayer == emptySlotLayer) {
                 continue;
             }
-            CornInfo info{mediumRotation, lowerRotation, targetLayer - emptySlotLayer};
-            CornState newState = rotateAndMove(info, emptySlotLayer, emptySlotIndex);
-            if (!newState.checkValidColors()) {
-                // output error message
-                std::cout << "Invalid colors: " << std::endl;
-                std::cout << "mediumRotation: " << mediumRotation << std::endl;
-                auto mediumRotated = rotate3kBits(m_medium, mediumRotation);
-                std::cout << "mediumRotated: ";
-                printLine(mediumRotated, std::cout);
-                std::cout << "lowerRotation: " << lowerRotation << std::endl;
-                std::cout << "lowerRotated: " << rotate3kBits(m_lower, lowerRotation) << std::endl;
-                std::cout << "targetLayer: " << targetLayer << std::endl;
-                std::cout << "emptySlotID: " << emptySlotID << std::endl;
-                std::cout << "emptySlotLayer: " << emptySlotLayer << std::endl;
-                std::cout << "emptySlotIndex: " << emptySlotIndex << std::endl;
-
-                pprint(std::cout);
-                newState.pprint(std::cout);
-                throw std::runtime_error("Invalid colors");
-            }
+            CornInfo info{mediumRotation, lowerRotation, emptySlotLayer, emptySlotIndex, targetLayer - emptySlotLayer};
+            CornState newState = rotateAndMove(info);
             newStates.push_back(std::make_pair(std::move(newState), std::move(info)));
         }
     }
+}
+
+CornState CornState::getPreviousState(const CornInfo &info) const {
+    // Do all the steps in reverse order
+    std::array<size_t, 4> newLayers{m_extra << 15, m_upper, rotate3kBits(m_medium, 6 - info.m_mediumAdjustment), rotate3kBits(m_lower, 6 - info.m_lowerAdjustment)};
+
+    // Move the empty slot
+    if (info.m_move > 0) {
+        for (int layer = info.m_emptySlotLayer + info.m_move; layer > info.m_emptySlotLayer; --layer) {
+            setkthColor(newLayers[layer], info.m_emptySlotIndex, getkthColor(newLayers[layer - 1], info.m_emptySlotIndex));
+        }
+        setkthColor(newLayers[info.m_emptySlotLayer], info.m_emptySlotIndex, 0);
+    } else if (info.m_move < 0) {
+        for (int layer = info.m_emptySlotLayer + info.m_move; layer < info.m_emptySlotLayer; ++layer) {
+            setkthColor(newLayers[layer], info.m_emptySlotIndex, getkthColor(newLayers[layer + 1], info.m_emptySlotIndex));
+        }
+        setkthColor(newLayers[info.m_emptySlotLayer], info.m_emptySlotIndex, 0);
+    }
+
+    // Rotate the medium and lower layers
+    newLayers[2] = rotate3kBits(newLayers[2], 6 - info.m_mediumRotation);
+    newLayers[3] = rotate3kBits(newLayers[3], 6 - info.m_lowerRotation);
+
+    return CornState(newLayers[0] >> 15, newLayers[1], newLayers[2], newLayers[3]);
 }
 
 size_t CornState::rotate3Bits(size_t mask) {
@@ -161,8 +140,8 @@ void CornState::setkthColor(size_t &mask, size_t k, size_t color) {
 size_t CornState::getMinRotation(size_t mask, size_t &rotated) {
     size_t rotation = 0;
     rotated = mask;
-    for (size_t rot = 0; rot < 6; rot++) {
-        mask = ((mask & 7) << 15) | (mask >> 3);
+    for (size_t rot = 1; rot < 6; rot++) {
+        mask = rotate3Bits(mask);
         if (mask < rotated) {
             rotation = rot;
             rotated = mask;
@@ -227,3 +206,7 @@ void CornState::printLine(size_t mask, std::ostream &os) const {
     os << "\n";
 }
 
+std::ostream &operator<<(std::ostream &os, const CornState &state) {
+    state.pprint(os);
+    return os;
+}
