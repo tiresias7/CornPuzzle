@@ -12,3 +12,4 @@ Next Steps:
 Implement backtrace functionality
 Add CornOperation to support step compression and solution display
 Design the algorithm to make all lower level color distinct
+Find out and improve cases where new states are all duplicates
