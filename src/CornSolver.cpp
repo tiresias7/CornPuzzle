@@ -1,8 +1,7 @@
 #include "CornSolver.hpp"
 
-CornSolver::CornSolver(size_t extra1, const std::vector<size_t> &upper1, const std::vector<size_t> &medium1, const std::vector<size_t> &lower1,
-    size_t extra2, const std::vector<size_t> &upper2, const std::vector<size_t> &medium2, const std::vector<size_t> &lower2)
-    : m_explorer1(extra1, upper1, medium1, lower1), m_explorer2(extra2, upper2, medium2, lower2) {}
+CornSolver::CornSolver(size_t extra, const std::vector<size_t> &upper, const std::vector<size_t> &medium, const std::vector<size_t> &lower)
+    : m_explorer1(extra, upper, medium, lower), m_explorer2(0, {1, 2, 3, 4, 5, 6}, {1, 2, 3, 4, 5, 6}, {1, 2, 3, 4, 5, 6}) {}
 
 // void CornSolver::setOutputSetting(OutputSetting setting) { m_outputSetting = setting; }
 

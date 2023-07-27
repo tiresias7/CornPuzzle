@@ -11,3 +11,6 @@ Next Steps:
 
 Add different solution printing options
 Add a logger
+Support color initialization/printing instead of number
+Support step by step guidance (as a output option)
+Maybe use Template meta programming to process a little further from the initial state 

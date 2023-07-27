@@ -9,8 +9,7 @@ public:
     //     UpperLayerFixed,
     //     EmptySlotIndexFixed
     // };
-    CornSolver(size_t extra1, const std::vector<size_t> &upper1, const std::vector<size_t> &medium1, const std::vector<size_t> &lower1,
-        size_t extra2, const std::vector<size_t> &upper2, const std::vector<size_t> &medium2, const std::vector<size_t> &lower2);
+    CornSolver(size_t extra, const std::vector<size_t> &upper, const std::vector<size_t> &medium, const std::vector<size_t> &lower);
 
     // void setOutputSetting(OutputSetting setting);
 
