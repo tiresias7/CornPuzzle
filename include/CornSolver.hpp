@@ -1,30 +1,23 @@
 #pragma once
 
-#include <iostream>
-#include <unordered_map>
-#include <vector>
-#include <span>
-#include <optional>
 
-#include "CornInfo.hpp"
-#include "CornState.hpp"
+#include "CornExplorer.hpp"
 
 class CornSolver {
-
 public:
-    CornSolver(const std::vector<CornState> &states);
+    // enum class OutputSetting {
+    //     UpperLayerFixed,
+    //     EmptySlotIndexFixed
+    // };
+    CornSolver(size_t extra1, const std::vector<size_t> &upper1, const std::vector<size_t> &medium1, const std::vector<size_t> &lower1,
+        size_t extra2, const std::vector<size_t> &upper2, const std::vector<size_t> &medium2, const std::vector<size_t> &lower2);
 
-    size_t getCurDepth() const;
-    std::span<const CornState> getDeepestStates() const;
-    void proceedDeepestStates();
-    // bool findSameStates(std::span<const CornState> states) const;
-    std::optional<CornState> findSameState(std::span<const CornState> states) const;
+    // void setOutputSetting(OutputSetting setting);
 
+    void solve();
 private:
-    bool attemptInsert(CornState state, CornInfo info, int depth);
+    // OutputSetting m_outputSetting;
+    CornExplorer m_explorer1, m_explorer2;
 
-    std::unordered_map<CornState, size_t, CornState::Hash> m_stateMap;
-    std::vector<CornState> m_states;
-    std::vector<CornInfo> m_infos;
-    std::vector<size_t> m_depths;
+    void backtrace(const CornState &state);
 };

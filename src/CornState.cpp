@@ -5,12 +5,15 @@
 CornState::CornState(size_t extra, size_t upper, size_t medium, size_t lower) 
     : m_extra{extra}, m_upper{upper}, m_medium{medium}, m_lower{lower} {}
 
-CornState::CornState(size_t extra, const std::vector<size_t> &upper, const std::vector<size_t> &medium, const std::vector<size_t> &lower) {
-    checkValidColors(extra, upper, medium, lower);
-    m_extra = extra;
-    m_upper = colorsToBit(upper);
-    getMinRotation(colorsToBit(medium), m_medium);
-    getMinRotation(colorsToBit(lower), m_lower);
+std::pair<CornState, CornInfo> CornState::makeInitialState(size_t extra, const std::vector<size_t> &upper, const std::vector<size_t> &medium, const std::vector<size_t> &lower) {
+    CornState::checkValidColors(extra, upper, medium, lower);
+    size_t extraMask = extra;
+    size_t upperMask = colorsToBit(upper);
+    size_t mediumMask = 0;
+    size_t lowerMask = 0;
+    size_t mediumAdjustment = getMinRotation(colorsToBit(medium), mediumMask);
+    size_t lowerAdjustment = getMinRotation(colorsToBit(lower), lowerMask);
+    return {CornState(extraMask, upperMask, mediumMask, lowerMask), CornInfo{mediumAdjustment, lowerAdjustment}};
 }
 
 std::pair<int, int> CornState::getEmptySlotLoc() const {

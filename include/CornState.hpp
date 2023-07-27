@@ -18,7 +18,7 @@ public:
     // Constructor that accepts bit representations directly
     CornState(size_t extra, size_t upper, size_t medium, size_t lower);
 
-    CornState(size_t extra, const std::vector<size_t> &upper, const std::vector<size_t> &medium, const std::vector<size_t> &lower);
+    // CornState(size_t extra, const std::vector<size_t> &upper, const std::vector<size_t> &medium, const std::vector<size_t> &lower, CornInfo &info);
 
     size_t getExtra() const { return m_extra; }
     size_t getUpper() const { return m_upper; }
@@ -34,6 +34,8 @@ public:
     void getNewStates(std::vector<std::pair<CornState, CornInfo>>& newStates) const;
 
     CornState getPreviousState(const CornInfo &info) const;
+
+    static std::pair<CornState, CornInfo> makeInitialState(size_t extra, const std::vector<size_t> &upper, const std::vector<size_t> &medium, const std::vector<size_t> &lower);
 
 private:
     // Each layer is an 18-bit integer, where each color is represented by 3 bits.

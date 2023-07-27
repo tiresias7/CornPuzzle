@@ -7,8 +7,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 include_directories(include)
 
 add_library(CornLib
+    src/CornOperation.cpp
     src/CornInfo.cpp
     src/CornState.cpp
+    src/CornExplorer.cpp
     src/CornSolver.cpp)
 
 add_executable(CornPuzzle example/main.cpp)

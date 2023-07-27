@@ -9,6 +9,7 @@ Wrap up main.cpp
 Update C++ standard to C++20 to support some features
 
 Next Steps:
+
 Implement backtrace functionality
 Add CornOperation to support step compression and solution display
 Design the algorithm to make all lower level color distinct

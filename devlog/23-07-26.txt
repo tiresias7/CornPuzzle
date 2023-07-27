@@ -1,0 +1,13 @@
+Date: July 26, 2023
+
+Progress:
+
+Implemented CornOperation to represent basic operations
+Enabled solution display in a more readable format
+Renamed CornSolver to CornExplorer, added a more suitable CornSolver
+Simplified main function
+
+Next Steps:
+
+Add different solution printing options
+Add a logger

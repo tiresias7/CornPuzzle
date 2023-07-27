@@ -1,65 +1,78 @@
 #include "CornSolver.hpp"
 
+CornSolver::CornSolver(size_t extra1, const std::vector<size_t> &upper1, const std::vector<size_t> &medium1, const std::vector<size_t> &lower1,
+    size_t extra2, const std::vector<size_t> &upper2, const std::vector<size_t> &medium2, const std::vector<size_t> &lower2)
+    : m_explorer1(extra1, upper1, medium1, lower1), m_explorer2(extra2, upper2, medium2, lower2) {}
 
-CornSolver::CornSolver(const std::vector<CornState> &states) {
-    if (states.size() == 0) {
-        throw std::invalid_argument("states must not be empty");
-    }
-    for (const CornState &state : states) {
-        attemptInsert(state, CornInfo{}, 0);
-    }
-}
+// void CornSolver::setOutputSetting(OutputSetting setting) { m_outputSetting = setting; }
 
-size_t CornSolver::getCurDepth() const { return m_depths[m_depths.size() - 1]; }
+void CornSolver::solve() {
+    // std::cout << "solving..." << std::endl;
+    int MAX_STEP = 10;
+    for (int step = 0; step < MAX_STEP; ++step) {
+        m_explorer1.proceedDeepestStates();
+        std::optional<CornState> optstate = m_explorer1.findSameState(m_explorer2.getDeepestStates());
+        if (optstate.has_value()) {
+            // std::cout << "Found same state at step " << step << std::endl;
+            CornState state = optstate.value();
+            // std::cout << "State: " << std::endl << state << std::endl;
 
-std::span<const CornState> CornSolver::getDeepestStates() const {
-    // m_depths is non-decreasing
-    size_t maxDepth = getCurDepth();
-    // use lower bound to find the first state with depth = maxDepth
-    size_t startID = std::lower_bound(m_depths.begin(), m_depths.end(), maxDepth) - m_depths.begin();
-    return std::span<const CornState>(m_states).subspan(startID);
-}
-
-void CornSolver::proceedDeepestStates() {
-    size_t curDepth = getCurDepth();
-    size_t startID = m_states.size() - getDeepestStates().size();
-    size_t endID = m_states.size();
-    // std::cout << "deepest states = " << endID - startID << std::endl;
-    for (size_t i = startID; i < endID; i++) {
-        std::vector<std::pair<CornState, CornInfo>> nextStates;
-        m_states[i].getNewStates(nextStates);
-        for (const auto &nextState : nextStates) {
-            attemptInsert(std::move(nextState.first), std::move(nextState.second), curDepth + 1);
+            // get the path to the state
+            backtrace(state);
+            return;
         }
+        m_explorer2.proceedDeepestStates();
     }
+    // std::cout << "No same state found" << std::endl;
 }
 
-// CornSolver::findSameStates(std::span<const CornState> states) const {
-//     for (const CornState &state : states) {
-//         if (m_stateMap.find(state) != m_stateMap.end()) {
-//             state.pprint(std::cout);
-//             return true;
-//         }
-//     }
-//     return false;
-// }
-
-std::optional<CornState> CornSolver::findSameState(std::span<const CornState> states) const {
-    for (const CornState &state : states) {
-        if (m_stateMap.find(state) != m_stateMap.end()) {
-            return state;
+void CornSolver::backtrace(const CornState &state) {
+    std::vector<CornState> path1, path2;
+    std::vector<CornInfo> infos1, infos2;
+    CornState curState = state;
+    while (true) {
+        path1.push_back(curState);
+        infos1.push_back(m_explorer1.getInfo(curState));
+        if (infos1.back().isInitialMove()) {
+            break;
         }
+        curState = curState.getPreviousState(infos1.back());
     }
-    return std::nullopt;
-}
 
-bool CornSolver::attemptInsert(CornState state, CornInfo info, int depth) {
-    if (m_stateMap.find(state) == m_stateMap.end()) {
-        m_stateMap.insert({state, m_states.size()});
-        m_states.push_back(state);
-        m_infos.push_back(info);
-        m_depths.push_back(depth);
-        return true;
+    curState = state;
+    while (true) {
+        path2.push_back(curState);
+        infos2.push_back(m_explorer2.getInfo(curState));
+        if (infos2.back().isInitialMove()) {
+            break;
+        }
+        curState = curState.getPreviousState(infos2.back());
     }
-    return false;
+
+    // std::cout << "Path1: " << std::endl;
+    // for (int i = path1.size() - 1; i >= 0; --i) {
+    //     std::cout << path1[i] << std::endl;
+    // }
+    // std::cout << "Path2: " << std::endl;
+    // for (int i = path2.size() - 1; i >= 0; --i) {
+    //     std::cout << path2[i] << std::endl;
+    // }
+
+    std::cout << "All Operations: " << std::endl;
+    std::vector<CornOperation> operations;
+    for (int i = infos1.size() - 1; i >= 0; --i) {
+        // infos1[i].getOperations() gives a vector of operations, add all of them to operations
+        std::vector<CornOperation> forwardOperations = infos1[i].getOperations();
+        operations.insert(operations.end(), forwardOperations.begin(), forwardOperations.end());
+    }
+    for (int i = 0; i < infos2.size(); ++i) {
+        // infos2[i].getOperations() gives a vector of operations, add all of them to operations
+        std::vector<CornOperation> backwardOperations = infos2[i].getReverseOperations();
+        operations.insert(operations.end(), backwardOperations.begin(), backwardOperations.end());
+    }
+    // compress the operations
+    std::vector<CornOperation> compressedOperations = CornOperation::compressOperations(operations);
+    for (const CornOperation &operation : compressedOperations) {
+        std::cout << operation << std::endl;
+    }
 }
